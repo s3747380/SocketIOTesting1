@@ -40,12 +40,12 @@ let users = [];
 
 io.on('connection', (socket) => {
     console.log(`Connected, ID: ${socket.id}`);
+    io.emit('handshake socketID',socket.id);
     users.push({
         socketID: socket.id,
-        lat: 0,
-        lng: 0
+        lat: 1.1,
+        lng: 1.1
     });
-    console.log(users);
 
     socket.on('user',(data) => {
         console.log(`Data from frontend: ${data}`);
@@ -70,6 +70,30 @@ io.on('connection', (socket) => {
             console.log(user)
         });        
         io.emit("user return",JSON.stringify(users));
+    });
+
+    socket.on('sos message', (socketID)=> {
+        // io.emit('sos sender');
+        console.log(`Client ${socketID} has sent an SOS message`);
+        io.emit('sos receiver', `Client ${socketID} has sent an SOS message`);
+    });
+
+    socket.on('user dispose', (socketID)=>{
+        console.log("event user dispose is triggered");
+        io.emit('user close stream');
+        if (users.length != 0){
+            console.log("condition matches");
+            users.forEach(user => {
+                console.log(`This user socketID is ${user.socketID}`);
+                console.log(`SocketID from the frontend is ${socketID}`);
+                if (user.socketID == socketID) {
+                    users.pop(user);
+                    socket.disconnect();
+                    console.log("Destroy the user socket connection!");
+                    return
+                }
+            });
+        }
     });
 
 });
