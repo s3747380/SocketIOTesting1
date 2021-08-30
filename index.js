@@ -32,9 +32,13 @@
 const app = require('express')()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http);
+const cors = require('cors');
+
 app.get('/', (req, res) => {
     res.send("Node Server is running. Yay!!")
 })
+
+app.use(cors());
 
 let users = [];
 
@@ -43,8 +47,9 @@ io.on('connection', (socket) => {
     io.emit('handshake socketID',socket.id);
     users.push({
         socketID: socket.id,
+        userId: 0,
         lat: 1.1,
-        lng: 1.1
+        lng: 1.1,
     });
 
     socket.on('user',(data) => {
@@ -55,6 +60,7 @@ io.on('connection', (socket) => {
         if (users.length != 0){
             users.forEach( user => {
                 if (user.socketID == obj.socketID) {
+                    user.userId = obj.userId;
                     user.lat = obj.lat;
                     user.lng = obj.lng;
                     console.log("Changed the lat lng value");
@@ -75,8 +81,8 @@ io.on('connection', (socket) => {
     socket.on('sos message', (socketID)=> {
         // io.emit('sos sender');
         console.log(`Client ${socketID} has sent an SOS message`);
-        io.emit('sos receiver', `Client ${socketID} has sent an SOS message`);
-    });
+        io.emit('sos receiver', socketID);
+        });
 
     socket.on('user dispose', (socketID)=>{
         console.log("event user dispose is triggered");
